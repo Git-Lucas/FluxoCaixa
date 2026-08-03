@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: fluxocaixa
+      POSTGRES_PASSWORD: fluxocaixa
+      POSTGRES_DB: fluxocaixa_lancamentos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxocaixa -d fluxocaixa_lancamentos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: fluxocaixa
+      RABBITMQ_DEFAULT_PASS: fluxocaixa
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  lancamentos:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Lancamentos.Api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Lancamentos: "Host=postgres;Port=5432;Database=fluxocaixa_lancamentos;Username=fluxocaixa;Password=fluxocaixa"
+      RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
+      Autenticacao__ChaveDeAssinatura: "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

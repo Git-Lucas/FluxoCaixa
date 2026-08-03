@@ -378,3 +378,6 @@ CLAUDE.md
 *.pem
 *.key
 *.pub
+
+# Scripts
+scripts/

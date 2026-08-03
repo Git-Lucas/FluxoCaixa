@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>FluxoCaixa.Lancamentos.Aplicacao</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FluxoCaixa.Lancamentos.Dominio\FluxoCaixa.Lancamentos.Dominio.csproj" />
+  </ItemGroup>
+
+</Project>
