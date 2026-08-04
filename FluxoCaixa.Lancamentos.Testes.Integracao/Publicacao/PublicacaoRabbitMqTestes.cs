@@ -1,3 +1,4 @@
+using FluxoCaixa.Contratos;
 using FluxoCaixa.Lancamentos.Aplicacao.Portas;
 using FluxoCaixa.Lancamentos.Dominio;
 using FluxoCaixa.Lancamentos.Infraestrutura.Persistencia;
@@ -108,7 +109,7 @@ public class PublicacaoRabbitMqTestes(PublicacaoFixture fixture)
         return lancamento;
     }
 
-    private static async Task<Publicacao.EventoLancamentoRegistrado?> AguardarEventoAsync(CapturadorDeEventos capturador, Guid lancamentoId, int tentativas = 30)
+    private static async Task<EventoLancamentoRegistrado?> AguardarEventoAsync(CapturadorDeEventos capturador, Guid lancamentoId, int tentativas = 30)
     {
         for (var tentativa = 0; tentativa < tentativas; tentativa++)
         {

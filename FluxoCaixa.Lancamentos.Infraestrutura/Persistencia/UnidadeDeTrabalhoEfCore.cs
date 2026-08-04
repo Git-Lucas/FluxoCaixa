@@ -1,7 +1,7 @@
+using FluxoCaixa.Contratos;
 using FluxoCaixa.Lancamentos.Aplicacao;
 using FluxoCaixa.Lancamentos.Aplicacao.Portas;
 using FluxoCaixa.Lancamentos.Dominio;
-using FluxoCaixa.Lancamentos.Infraestrutura.Publicacao;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;

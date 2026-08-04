@@ -48,13 +48,12 @@ public static class InfraestruturaServiceCollectionExtensions
                 outbox.DisableInboxCleanupService();
             });
 
-            // Nenhum receive endpoint aqui: Lançamentos só publica, nunca consome. Uma fila
-            // vinculada sem consumidor não "espera" com segurança — o MassTransit move a mensagem
-            // para uma fila `_skipped` assim que percebe que não há handler. A fila real nasce
-            // quando o serviço de consolidado (change futura) declarar seu próprio receive endpoint
-            // vinculado a este mesmo tipo de evento. Eventos publicados antes disso existir não são
-            // persistidos em nenhuma fila — mitigação aceita em design.md: o consolidado se
-            // reconstrói relendo a tabela de lançamentos, a fonte da verdade.
+            // Nenhum receive endpoint aqui: Lançamentos só publica, nunca consome. A fila que
+            // recebe este evento é declarada pelo serviço de Consolidado (FluxoCaixa.Consolidado.Api),
+            // vinculada ao mesmo tipo de evento em FluxoCaixa.Contratos. Enquanto o Consolidado nunca
+            // tiver subido ao menos uma vez, o exchange descarta o que publica por falta de fila
+            // vinculada — por isso o docker-compose sobe os dois serviços juntos (design.md da
+            // change "implementar-servico-consolidado").
             massTransit.UsingRabbitMq((_, rabbitMq) => rabbitMq.Host(new Uri(opcoesRabbitMq.ConnectionString)));
         });
 

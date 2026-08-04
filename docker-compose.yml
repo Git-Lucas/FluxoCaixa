@@ -1,5 +1,5 @@
 services:
-  postgres:
+  postgres-lancamentos:
     image: postgres:18-alpine
     environment:
       POSTGRES_USER: fluxocaixa
@@ -8,9 +8,25 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_lancamentos_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fluxocaixa -d fluxocaixa_lancamentos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-consolidado:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: fluxocaixa
+      POSTGRES_PASSWORD: fluxocaixa
+      POSTGRES_DB: fluxocaixa_consolidado
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_consolidado_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxocaixa -d fluxocaixa_consolidado"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -37,14 +53,32 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Lancamentos: "Host=postgres;Port=5432;Database=fluxocaixa_lancamentos;Username=fluxocaixa;Password=fluxocaixa"
+      ConnectionStrings__Lancamentos: "Host=postgres-lancamentos;Port=5432;Database=fluxocaixa_lancamentos;Username=fluxocaixa;Password=fluxocaixa"
       RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
       Autenticacao__ChaveDeAssinatura: "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789"
     depends_on:
-      postgres:
+      postgres-lancamentos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  consolidado:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Consolidado.Api/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Consolidado: "Host=postgres-consolidado;Port=5432;Database=fluxocaixa_consolidado;Username=fluxocaixa;Password=fluxocaixa"
+      RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
+      Autenticacao__ChaveDeAssinatura: "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789"
+    depends_on:
+      postgres-consolidado:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_lancamentos_data:
+  postgres_consolidado_data:

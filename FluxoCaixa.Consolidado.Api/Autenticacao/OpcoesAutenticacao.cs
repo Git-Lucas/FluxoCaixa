@@ -1,4 +1,4 @@
-namespace FluxoCaixa.Lancamentos.Api.Autenticacao;
+namespace FluxoCaixa.Consolidado.Api.Autenticacao;
 
 /// <summary>
 /// A validação da credencial é local, contra uma chave configurada — nunca contra o emissor

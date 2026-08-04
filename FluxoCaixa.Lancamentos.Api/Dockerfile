@@ -4,12 +4,14 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
+COPY FluxoCaixa.Contratos/FluxoCaixa.Contratos.csproj FluxoCaixa.Contratos/
 COPY FluxoCaixa.Lancamentos.Dominio/FluxoCaixa.Lancamentos.Dominio.csproj FluxoCaixa.Lancamentos.Dominio/
 COPY FluxoCaixa.Lancamentos.Aplicacao/FluxoCaixa.Lancamentos.Aplicacao.csproj FluxoCaixa.Lancamentos.Aplicacao/
 COPY FluxoCaixa.Lancamentos.Infraestrutura/FluxoCaixa.Lancamentos.Infraestrutura.csproj FluxoCaixa.Lancamentos.Infraestrutura/
 COPY FluxoCaixa.Lancamentos.Api/FluxoCaixa.Lancamentos.Api.csproj FluxoCaixa.Lancamentos.Api/
 RUN dotnet restore FluxoCaixa.Lancamentos.Api/FluxoCaixa.Lancamentos.Api.csproj
 
+COPY FluxoCaixa.Contratos/ FluxoCaixa.Contratos/
 COPY FluxoCaixa.Lancamentos.Dominio/ FluxoCaixa.Lancamentos.Dominio/
 COPY FluxoCaixa.Lancamentos.Aplicacao/ FluxoCaixa.Lancamentos.Aplicacao/
 COPY FluxoCaixa.Lancamentos.Infraestrutura/ FluxoCaixa.Lancamentos.Infraestrutura/

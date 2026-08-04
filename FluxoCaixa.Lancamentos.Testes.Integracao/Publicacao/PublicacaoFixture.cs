@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
+using FluxoCaixa.Contratos;
 using FluxoCaixa.Lancamentos.Aplicacao.Portas;
 using FluxoCaixa.Lancamentos.Infraestrutura.Persistencia;
-using FluxoCaixa.Lancamentos.Infraestrutura.Publicacao;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

@@ -14,13 +14,10 @@ public sealed class LancamentosDbContextFactory : IDesignTimeDbContextFactory<La
 {
     public LancamentosDbContext CreateDbContext(string[] args)
     {
-        // Usada apenas para gerar migrações; não conecta a nenhum banco real nem sobe com o serviço.
-#pragma warning disable S2068
-        const string StringDeConexaoDeDesignTime = "Host=localhost;Database=fluxocaixa_lancamentos;Username=postgres;Password=postgres";
-#pragma warning restore S2068
+        string stringDeConexaoDeDesignTime = string.Empty;
 
         var opcoes = new DbContextOptionsBuilder<LancamentosDbContext>()
-            .UseNpgsql(StringDeConexaoDeDesignTime)
+            .UseNpgsql(stringDeConexaoDeDesignTime)
             .Options;
 
         return new LancamentosDbContext(opcoes, new ContextoComercianteIndisponivelEmTempoDeDesign());

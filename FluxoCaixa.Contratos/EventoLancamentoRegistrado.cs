@@ -1,4 +1,4 @@
-namespace FluxoCaixa.Lancamentos.Infraestrutura.Publicacao;
+namespace FluxoCaixa.Contratos;
 
 /// <summary>
 /// Contrato do evento publicado para o serviço de consolidado. O identificador é estável entre

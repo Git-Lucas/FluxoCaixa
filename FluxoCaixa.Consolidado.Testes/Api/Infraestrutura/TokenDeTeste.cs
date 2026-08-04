@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace FluxoCaixa.Lancamentos.Api.Testes.Infraestrutura;
+namespace FluxoCaixa.Consolidado.Testes.Api.Infraestrutura;
 
 /// <summary>
 /// Forja tokens com a mesma chave configurada em appsettings.json para os testes. O emissor de
