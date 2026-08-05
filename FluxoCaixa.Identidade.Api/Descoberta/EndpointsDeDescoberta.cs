@@ -5,20 +5,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FluxoCaixa.Identidade.Api.Descoberta;
 
-/// <summary>
-/// Publica a chave pública (JWKS) e o documento de descoberta — o caminho que faz o <c>Authority</c>
-/// do <c>JwtBearer</c> bastar nos serviços de negócio, sem resolvedor de chave escrito à mão
-/// (design.md, decisão 1). Nenhum dos dois endpoints expõe material de chave privada.
-/// </summary>
 internal static class EndpointsDeDescoberta
 {
     public const string CaminhoDoJwks = "/.well-known/jwks.json";
-    private const string CaminhoDaConfiguracao = "/.well-known/openid-configuration";
+    private const string _caminhoDaConfiguracao = "/.well-known/openid-configuration";
 
     public static void MapearEndpointsDeDescoberta(this IEndpointRouteBuilder app)
     {
         app.MapGet(CaminhoDoJwks, ObterJwks);
-        app.MapGet(CaminhoDaConfiguracao, ObterConfiguracao);
+        app.MapGet(_caminhoDaConfiguracao, ObterConfiguracao);
     }
 
     private static IResult ObterJwks(ChaveDeAssinatura chaveDeAssinatura)

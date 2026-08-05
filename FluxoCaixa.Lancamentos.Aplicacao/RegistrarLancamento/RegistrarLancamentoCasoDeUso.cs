@@ -6,11 +6,6 @@ using FluxoCaixa.Lancamentos.Dominio;
 
 namespace FluxoCaixa.Lancamentos.Aplicacao.RegistrarLancamento;
 
-/// <summary>
-/// Registra um lançamento. A consulta da chave de idempotência precede a validação de domínio: um
-/// reenvio identificado pela chave devolve a resposta original sem reexecutar validação alguma,
-/// inclusive a da janela de competência.
-/// </summary>
 public sealed class RegistrarLancamentoCasoDeUso(
     ILancamentoRepositorio lancamentoRepositorio,
     IRegistroIdempotencia registroIdempotencia,
@@ -88,11 +83,6 @@ public sealed class RegistrarLancamentoCasoDeUso(
         return new RegistrarLancamentoResposta(lancamento.Id, lancamento.RecebidoEm, Criado: false);
     }
 
-    /// <summary>
-    /// Hash sobre os campos de negócio normalizados, calculado a partir da requisição bruta, sem
-    /// passar pelas validações de domínio — a consulta da chave precede a validação, e o cálculo da
-    /// impressão não pode reintroduzi-la pela porta dos fundos.
-    /// </summary>
     private static string CalcularImpressaoDoConteudo(RegistrarLancamentoRequisicao requisicao)
     {
         var tipoNormalizado = requisicao.Tipo.Trim().ToLowerInvariant();

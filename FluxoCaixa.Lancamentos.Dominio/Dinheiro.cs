@@ -2,11 +2,6 @@ using System.Globalization;
 
 namespace FluxoCaixa.Lancamentos.Dominio;
 
-/// <summary>
-/// Valor monetário em reais, com aritmética decimal exata. Sempre estritamente positivo e com no
-/// máximo duas casas decimais; o efeito sobre o saldo é determinado pelo tipo do lançamento, nunca
-/// pelo sinal do valor.
-/// </summary>
 public readonly record struct Dinheiro
 {
     public Dinheiro(decimal valor)

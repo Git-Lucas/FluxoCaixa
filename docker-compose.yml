@@ -40,7 +40,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "nc", "-z", "127.0.0.1", "5672"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -58,6 +58,7 @@ services:
       Emissao__Clientes__0__ClientSecret: segredo-comerciante-1-troque-em-producao
       Emissao__Clientes__1__ClientId: comerciante-2
       Emissao__Clientes__1__ClientSecret: segredo-comerciante-2-troque-em-producao
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
     volumes:
       - identidade_chave_data:/dados/chave
 
@@ -73,6 +74,7 @@ services:
       RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
       Autenticacao__Authority: "http://identidade:8080"
       Autenticacao__RequererHttps: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
     depends_on:
       postgres-lancamentos:
         condition: service_healthy
@@ -91,11 +93,20 @@ services:
       RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
       Autenticacao__Authority: "http://identidade:8080"
       Autenticacao__RequererHttps: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
     depends_on:
       postgres-consolidado:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+
+  dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.5
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+      - "4317:18889"
 
 volumes:
   postgres_lancamentos_data:

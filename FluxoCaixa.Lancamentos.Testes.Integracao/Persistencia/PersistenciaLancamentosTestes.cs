@@ -9,7 +9,7 @@ namespace FluxoCaixa.Lancamentos.Infraestrutura.Testes;
 [Collection(nameof(PostgresCollection))]
 public class PersistenciaLancamentosTestes(PostgresFixture fixture)
 {
-    private static readonly DateOnly s_dataCorrente = new(2026, 8, 2);
+    private static readonly DateOnly _dataCorrente = new(2026, 8, 2);
 
     private readonly PostgresFixture _fixture = fixture;
 
@@ -25,10 +25,6 @@ public class PersistenciaLancamentosTestes(PostgresFixture fixture)
         var lancamentoPersistido = await escopo.DbContext.Lancamentos.SingleAsync();
         var idempotenciaPersistida = await escopo.DbContext.RequisicoesIdempotentes.SingleAsync();
 
-        // OutboxMessage não tem filtro por comerciante (o publicador em segundo plano do MassTransit
-        // precisa enxergar todas), e o banco é compartilhado entre os testes desta coleção — filtra
-        // pelo conteúdo para isolar a mensagem deste lançamento das de outros testes. SingleAsync já
-        // é a asserção: lança se não houver exatamente uma.
         _ = await escopo.DbContext.Set<OutboxMessage>()
             .SingleAsync(mensagem => mensagem.Body.Contains(lancamentoId.ToString()));
 
@@ -126,8 +122,8 @@ public class PersistenciaLancamentosTestes(PostgresFixture fixture)
             comercianteId.Valor,
             "credito",
             150m,
-            s_dataCorrente,
-            s_dataCorrente,
+            _dataCorrente,
+            _dataCorrente,
             "venda de balcão",
             DateTimeOffset.UtcNow);
 

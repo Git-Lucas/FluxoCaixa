@@ -20,6 +20,8 @@ public static class InfraestruturaServiceCollectionExtensions
 
         servicos.AddDbContext<LancamentosDbContext>(opcoes => opcoes.UseNpgsql(stringDeConexao));
 
+        servicos.AddHealthChecks().AddDbContextCheck<LancamentosDbContext>(tags: ["ready"]);
+
         servicos.AddScoped<ContextoComerciante>();
         servicos.AddScoped<IContextoComerciante>(provedor => provedor.GetRequiredService<ContextoComerciante>());
         servicos.AddScoped<IDefinidorDeComerciante>(provedor => provedor.GetRequiredService<ContextoComerciante>());
@@ -36,30 +38,22 @@ public static class InfraestruturaServiceCollectionExtensions
 
         servicos.AddMassTransit(massTransit =>
         {
-            // Outbox transacional: IPublishEndpoint.Publish, chamado fora de um consumidor, grava
-            // nas tabelas de outbox do próprio DbContext em vez de entregar direto ao broker — na
-            // mesma transação do lançamento e da chave de idempotência.
             massTransit.AddEntityFrameworkOutbox<LancamentosDbContext>(outbox =>
             {
                 outbox.UsePostgres();
                 outbox.UseBusOutbox();
 
-                // Lançamentos só publica; não há inbox de consumidor a limpar.
                 outbox.DisableInboxCleanupService();
             });
 
-            // Nenhum receive endpoint aqui: Lançamentos só publica, nunca consome. A fila que
-            // recebe este evento é declarada pelo serviço de Consolidado (FluxoCaixa.Consolidado.Api),
-            // vinculada ao mesmo tipo de evento em FluxoCaixa.Contratos. Enquanto o Consolidado nunca
-            // tiver subido ao menos uma vez, o exchange descarta o que publica por falta de fila
-            // vinculada — por isso o docker-compose sobe os dois serviços juntos (design.md da
-            // change "implementar-servico-consolidado").
             massTransit.UsingRabbitMq((_, rabbitMq) => rabbitMq.Host(new Uri(opcoesRabbitMq.ConnectionString)));
         });
 
         servicos.AddOptions<OpcoesDeExpurgo>()
             .Bind(configuracao.GetSection(OpcoesDeExpurgo.SecaoDeConfiguracao));
         servicos.AddHostedService<ExpurgoDeIdempotenciaEmSegundoPlano>();
+
+        servicos.AddSingleton<MedidorDeVolumePendente>();
 
         return servicos;
     }

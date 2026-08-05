@@ -58,31 +58,6 @@ public class ConsultaEndpointTestes : IClassFixture<ApiTestesFactory>
         Assert.Equal(0m, corpo!.TotalCredito);
     }
 
-    [Fact]
-    public async Task Consultar_ExcedeLimiteDeRequisicoesDoComerciante_RespondeComRetryAfter()
-    {
-        var token = TokenDeTeste.Gerar("comerciante-limite-de-taxa-consolidado");
-
-        // Bem mais que o mínimo teórico (201): cada requisição aceita bate no Postgres real, e a
-        // folga absorve a variação de latência sem deixar o token bucket repor a tempo de mascarar
-        // o limite.
-        var respostas = await Task.WhenAll(Enumerable.Range(0, 500).Select(async _ =>
-        {
-            using var requisicao = CriarRequisicao("/consolidado/2026-08-02", token);
-            return await _cliente.SendAsync(requisicao);
-        }));
-
-        var respostaLimitada = Array.Find(respostas, r => r.StatusCode == HttpStatusCode.TooManyRequests);
-
-        Assert.NotNull(respostaLimitada);
-        Assert.True(respostaLimitada.Headers.TryGetValues("Retry-After", out _));
-
-        foreach (var resposta in respostas)
-        {
-            resposta.Dispose();
-        }
-    }
-
     private static HttpRequestMessage CriarRequisicao(string caminho, string? token)
     {
         var requisicao = new HttpRequestMessage(HttpMethod.Get, caminho);

@@ -1,8 +1,5 @@
 namespace FluxoCaixa.Lancamentos.Dominio;
 
-/// <summary>
-/// Tipo do lançamento. Determina o efeito sobre o saldo: crédito aumenta, débito diminui.
-/// </summary>
 public enum TipoLancamento
 {
     Credito,
@@ -11,41 +8,33 @@ public enum TipoLancamento
 
 public static class TipoLancamentoExtensoes
 {
-    private const string ContratoCredito = "credito";
-    private const string ContratoDebito = "debito";
+    private const string _contratoCredito = "credito";
+    private const string _contratoDebito = "debito";
 
-    /// <summary>
-    /// Interpreta o tipo a partir do valor recebido no contrato da interface (`credito` ou
-    /// `debito`). Qualquer outro valor viola a regra de domínio.
-    /// </summary>
     public static TipoLancamento Interpretar(string? valor) => valor switch
     {
-        ContratoCredito => TipoLancamento.Credito,
-        ContratoDebito => TipoLancamento.Debito,
+        _contratoCredito => TipoLancamento.Credito,
+        _contratoDebito => TipoLancamento.Debito,
         _ => throw new LancamentoInvalidoException(
             RegraViolada.TipoDesconhecido,
-            $"O tipo do lançamento deve ser '{ContratoCredito}' ou '{ContratoDebito}'."),
+            $"O tipo do lançamento deve ser '{_contratoCredito}' ou '{_contratoDebito}'."),
     };
 
     public static string ParaContrato(this TipoLancamento tipo) => tipo switch
     {
-        TipoLancamento.Credito => ContratoCredito,
-        TipoLancamento.Debito => ContratoDebito,
+        TipoLancamento.Credito => _contratoCredito,
+        TipoLancamento.Debito => _contratoDebito,
         _ => throw new LancamentoInvalidoException(
             RegraViolada.TipoDesconhecido,
-            $"O tipo do lançamento deve ser '{ContratoCredito}' ou '{ContratoDebito}'."),
+            $"O tipo do lançamento deve ser '{_contratoCredito}' ou '{_contratoDebito}'."),
     };
 
-    /// <summary>
-    /// Efeito do lançamento sobre o saldo: +1 para crédito, -1 para débito. O sinal do valor
-    /// monetário em si nunca carrega esse efeito.
-    /// </summary>
     public static int Sinal(this TipoLancamento tipo) => tipo switch
     {
         TipoLancamento.Credito => 1,
         TipoLancamento.Debito => -1,
         _ => throw new LancamentoInvalidoException(
             RegraViolada.TipoDesconhecido,
-            $"O tipo do lançamento deve ser '{ContratoCredito}' ou '{ContratoDebito}'."),
+            $"O tipo do lançamento deve ser '{_contratoCredito}' ou '{_contratoDebito}'."),
     };
 }

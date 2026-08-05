@@ -24,7 +24,6 @@ internal sealed class LancamentoProcessadoConfiguracao : IEntityTypeConfiguratio
             .HasColumnType("timestamptz")
             .IsRequired();
 
-        // Apoia o expurgo por data, executado fora do caminho de consumo.
         builder.HasIndex(lancamento => lancamento.ProcessadoEm)
             .HasDatabaseName("ix_lancamento_processado_processado_em");
     }

@@ -50,7 +50,6 @@ internal sealed class LancamentoConfiguracao : IEntityTypeConfiguration<Lancamen
             .HasColumnType("timestamptz")
             .IsRequired();
 
-        // Apoia o filtro global de isolamento, aplicado em toda consulta por padrão.
         builder.HasIndex(lancamento => lancamento.ComercianteId)
             .HasDatabaseName("ix_lancamento_comerciante_id");
     }

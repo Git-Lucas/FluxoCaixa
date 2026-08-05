@@ -1,6 +1,5 @@
 namespace FluxoCaixa.Consolidado.Testes.Infraestrutura;
 
-/// <summary>Poll com limite de tentativas para aguardar efeitos assíncronos (consumo de mensagem) se propagarem.</summary>
 internal static class Aguardar
 {
     public static async Task<T?> AteAsync<T>(Func<Task<T?>> consulta, int tentativas = 60, int intervaloEmMs = 100)

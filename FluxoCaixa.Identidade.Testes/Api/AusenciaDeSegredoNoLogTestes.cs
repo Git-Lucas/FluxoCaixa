@@ -34,8 +34,6 @@ public sealed class AusenciaDeSegredoNoLogTestes : IClassFixture<IdentidadeApiTe
         const string segredo = "segredo-que-nao-pode-vazar-no-log-9f8e7d";
         using var requisicao = CriarRequisicao(IdentidadeApiTestesFactory.ClientIdValido, segredo);
 
-        // O segredo é deliberadamente incorreto (não precisa emitir com sucesso para verificar o
-        // vazamento) — mas repetimos com o segredo válido logo abaixo para cobrir o caminho feliz.
         await _cliente.SendAsync(requisicao);
 
         using var requisicaoValida = CriarRequisicao(IdentidadeApiTestesFactory.ClientIdValido, IdentidadeApiTestesFactory.ClientSecretValido);

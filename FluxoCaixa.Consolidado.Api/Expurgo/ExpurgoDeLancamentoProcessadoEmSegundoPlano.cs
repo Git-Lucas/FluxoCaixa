@@ -7,12 +7,6 @@ using Microsoft.Extensions.Options;
 
 namespace FluxoCaixa.Consolidado.Api.Expurgo;
 
-/// <summary>
-/// Expurga, fora do caminho de consumo, os registros de deduplicação com mais de 7 dias — a chave
-/// primária de <c>lancamento_processado</c> está no caminho crítico de escrita do consumo e
-/// degradaria sem esse expurgo. Ignora o filtro global de comerciante deliberadamente: é limpeza
-/// entre comerciantes, não uma operação em nome de um deles.
-/// </summary>
 internal sealed class ExpurgoDeLancamentoProcessadoEmSegundoPlano(
     IServiceScopeFactory scopeFactory,
     IOptions<OpcoesDeExpurgo> opcoes,
