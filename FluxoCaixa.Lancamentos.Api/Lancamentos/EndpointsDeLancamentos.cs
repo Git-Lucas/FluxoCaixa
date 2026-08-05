@@ -1,10 +1,10 @@
 using FluxoCaixa.Lancamentos.Api.Autenticacao;
 using FluxoCaixa.Lancamentos.Api.Contratos;
-using FluxoCaixa.Lancamentos.Api.LimiteDeTaxa;
 using FluxoCaixa.Lancamentos.Aplicacao.Portas;
 using FluxoCaixa.Lancamentos.Aplicacao.RegistrarLancamento;
 using FluxoCaixa.Lancamentos.Dominio;
 using FluxoCaixa.Lancamentos.Infraestrutura.Persistencia;
+using FluxoCaixa.Plataforma.LimiteDeTaxa;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 

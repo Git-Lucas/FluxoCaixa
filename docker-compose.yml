@@ -45,6 +45,22 @@ services:
       timeout: 5s
       retries: 10
 
+  identidade:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Identidade.Api/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      Chave__CaminhoDoArquivo: /dados/chave/chave-de-assinatura.pem
+      Emissao__Clientes__0__ClientId: comerciante-1
+      Emissao__Clientes__0__ClientSecret: segredo-comerciante-1-troque-em-producao
+      Emissao__Clientes__1__ClientId: comerciante-2
+      Emissao__Clientes__1__ClientSecret: segredo-comerciante-2-troque-em-producao
+    volumes:
+      - identidade_chave_data:/dados/chave
+
   lancamentos:
     build:
       context: .
@@ -55,7 +71,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Lancamentos: "Host=postgres-lancamentos;Port=5432;Database=fluxocaixa_lancamentos;Username=fluxocaixa;Password=fluxocaixa"
       RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
-      Autenticacao__ChaveDeAssinatura: "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789"
+      Autenticacao__Authority: "http://identidade:8080"
+      Autenticacao__RequererHttps: "false"
     depends_on:
       postgres-lancamentos:
         condition: service_healthy
@@ -72,7 +89,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Consolidado: "Host=postgres-consolidado;Port=5432;Database=fluxocaixa_consolidado;Username=fluxocaixa;Password=fluxocaixa"
       RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
-      Autenticacao__ChaveDeAssinatura: "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789"
+      Autenticacao__Authority: "http://identidade:8080"
+      Autenticacao__RequererHttps: "false"
     depends_on:
       postgres-consolidado:
         condition: service_healthy
@@ -82,3 +100,4 @@ services:
 volumes:
   postgres_lancamentos_data:
   postgres_consolidado_data:
+  identidade_chave_data:

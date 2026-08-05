@@ -1,7 +1,7 @@
 using System.Globalization;
 using FluxoCaixa.Consolidado.Api.Autenticacao;
-using FluxoCaixa.Consolidado.Api.LimiteDeTaxa;
 using FluxoCaixa.Consolidado.Api.Persistencia;
+using FluxoCaixa.Plataforma.LimiteDeTaxa;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 

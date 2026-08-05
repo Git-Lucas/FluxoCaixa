@@ -1,24 +1,27 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FluxoCaixa.Lancamentos.Api.Testes.Infraestrutura;
 
 /// <summary>
-/// Forja tokens com a mesma chave configurada em appsettings.json para os testes. O emissor de
-/// credenciais real (PRD 03) ainda não existe.
+/// Forja tokens com um par RSA efêmero gerado nesta execução — o host de teste
+/// (<see cref="ApiTestesFactory"/>) injeta a chave pública correspondente diretamente na validação,
+/// sem subir o emissor real.
 /// </summary>
 internal static class TokenDeTeste
 {
-    public const string ChaveDeAssinatura = "troque-esta-chave-de-teste-em-qualquer-ambiente-real-0123456789";
     private const string Emissor = "fluxocaixa";
     private const string Audiencia = "fluxocaixa";
 
-    public static string Gerar(string comercianteId, TimeSpan? validoPor = null, string? chaveDeAssinatura = null)
+    private static readonly RSA s_chave = RSA.Create(2048);
+
+    public static RSA ChavePublica { get; } = RSA.Create(s_chave.ExportParameters(includePrivateParameters: false));
+
+    public static string Gerar(string comercianteId, TimeSpan? validoPor = null, RSA? chaveDeAssinatura = null)
     {
-        var chave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(chaveDeAssinatura ?? ChaveDeAssinatura));
-        var credenciais = new SigningCredentials(chave, SecurityAlgorithms.HmacSha256);
+        var credenciais = new SigningCredentials(new RsaSecurityKey(chaveDeAssinatura ?? s_chave), SecurityAlgorithms.RsaSha256);
 
         var token = new JwtSecurityToken(
             Emissor,

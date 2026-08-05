@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FluxoCaixa.Lancamentos.Aplicacao\FluxoCaixa.Lancamentos.Aplicacao.csproj" />
     <ProjectReference Include="..\FluxoCaixa.Lancamentos.Infraestrutura\FluxoCaixa.Lancamentos.Infraestrutura.csproj" />
+    <ProjectReference Include="..\FluxoCaixa.Plataforma\FluxoCaixa.Plataforma.csproj" />
   </ItemGroup>
 
   <ItemGroup>

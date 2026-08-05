@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using FluxoCaixa.Lancamentos.Api.Contratos;
 using FluxoCaixa.Lancamentos.Api.Testes.Infraestrutura;
 using Microsoft.AspNetCore.Mvc;
@@ -75,7 +76,8 @@ public class RegistroDeLancamentoEndpointTestes : IClassFixture<ApiTestesFactory
     [Fact]
     public async Task Registrar_AssinaturaAdulterada_EhRejeitado()
     {
-        var token = TokenDeTeste.Gerar("comerciante-1", chaveDeAssinatura: "outra-chave-completamente-diferente-0123456789012345");
+        using var chaveDiferente = RSA.Create(2048);
+        var token = TokenDeTeste.Gerar("comerciante-1", chaveDeAssinatura: chaveDiferente);
         using var requisicao = CriarRequisicao(CorpoValido(), token, "chave-assinatura-invalida");
 
         var resposta = await _cliente.SendAsync(requisicao);

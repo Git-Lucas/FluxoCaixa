@@ -5,6 +5,7 @@ WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
 COPY FluxoCaixa.Contratos/FluxoCaixa.Contratos.csproj FluxoCaixa.Contratos/
+COPY FluxoCaixa.Plataforma/FluxoCaixa.Plataforma.csproj FluxoCaixa.Plataforma/
 COPY FluxoCaixa.Lancamentos.Dominio/FluxoCaixa.Lancamentos.Dominio.csproj FluxoCaixa.Lancamentos.Dominio/
 COPY FluxoCaixa.Lancamentos.Aplicacao/FluxoCaixa.Lancamentos.Aplicacao.csproj FluxoCaixa.Lancamentos.Aplicacao/
 COPY FluxoCaixa.Lancamentos.Infraestrutura/FluxoCaixa.Lancamentos.Infraestrutura.csproj FluxoCaixa.Lancamentos.Infraestrutura/
@@ -12,6 +13,7 @@ COPY FluxoCaixa.Lancamentos.Api/FluxoCaixa.Lancamentos.Api.csproj FluxoCaixa.Lan
 RUN dotnet restore FluxoCaixa.Lancamentos.Api/FluxoCaixa.Lancamentos.Api.csproj
 
 COPY FluxoCaixa.Contratos/ FluxoCaixa.Contratos/
+COPY FluxoCaixa.Plataforma/ FluxoCaixa.Plataforma/
 COPY FluxoCaixa.Lancamentos.Dominio/ FluxoCaixa.Lancamentos.Dominio/
 COPY FluxoCaixa.Lancamentos.Aplicacao/ FluxoCaixa.Lancamentos.Aplicacao/
 COPY FluxoCaixa.Lancamentos.Infraestrutura/ FluxoCaixa.Lancamentos.Infraestrutura/

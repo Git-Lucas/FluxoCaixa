@@ -1,11 +1,10 @@
-using System.Text;
 using FluxoCaixa.Consolidado.Api.Autenticacao;
 using FluxoCaixa.Consolidado.Api.Consulta;
 using FluxoCaixa.Consolidado.Api.Consumo;
 using FluxoCaixa.Consolidado.Api.Expurgo;
-using FluxoCaixa.Consolidado.Api.LimiteDeTaxa;
 using FluxoCaixa.Consolidado.Api.Persistencia;
 using FluxoCaixa.Contratos;
+using FluxoCaixa.Plataforma.LimiteDeTaxa;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +57,7 @@ builder.Services.AddMassTransit(massTransit =>
 builder.Services
     .AddOptions<OpcoesAutenticacao>()
     .Bind(builder.Configuration.GetSection(OpcoesAutenticacao.SecaoDeConfiguracao))
-    .Validate(opcoes => !string.IsNullOrWhiteSpace(opcoes.ChaveDeAssinatura))
+    .Validate(opcoes => !string.IsNullOrWhiteSpace(opcoes.Authority))
     .ValidateOnStart();
 
 var opcoesAutenticacao = builder.Configuration
@@ -73,6 +72,8 @@ builder.Services
         // MapInboundClaims = false preserva o nome curto da claim ("sub"), em vez de remapeá-la
         // para a URI longa de ClaimTypes.
         opcoesDoJwt.MapInboundClaims = false;
+        opcoesDoJwt.Authority = opcoesAutenticacao.Authority;
+        opcoesDoJwt.RequireHttpsMetadata = opcoesAutenticacao.RequererHttps;
         opcoesDoJwt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -81,14 +82,17 @@ builder.Services
             ValidAudience = opcoesAutenticacao.Audiencia,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(opcoesAutenticacao.ChaveDeAssinatura)),
             ClockSkew = TimeSpan.FromSeconds(30),
         };
     });
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddRateLimiter(opcoes => PoliticaDeLimiteDeTaxa.Configurar(opcoes, opcoesAutenticacao.ClaimDoComerciante));
+builder.Services.AddRateLimiter(opcoes => PoliticaDeLimiteDeTaxa.Configurar(
+    opcoes,
+    opcoesAutenticacao.ClaimDoComerciante,
+    autenticado: new LimitesDeTaxa(Rajada: 200, TaxaPorSegundo: 100),
+    porOrigem: new LimitesDeTaxa(Rajada: 40, TaxaPorSegundo: 20)));
 
 builder.Services.AddProblemDetails();
 

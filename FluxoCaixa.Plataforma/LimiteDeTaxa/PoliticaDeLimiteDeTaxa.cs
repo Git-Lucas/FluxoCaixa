@@ -1,40 +1,47 @@
 using System.Globalization;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
-namespace FluxoCaixa.Consolidado.Api.LimiteDeTaxa;
+namespace FluxoCaixa.Plataforma.LimiteDeTaxa;
 
 /// <summary>
 /// Uma única política, particionada pelo estado de autenticação: comerciantes autenticados usam o
-/// limite de 100 req/s (rajada 200); tráfego sem credencial válida — ao qual o limite por
-/// comerciante não alcança — usa o limite de 20 req/s (rajada 40) por endereço de origem.
+/// limite <paramref name="autenticado"/> por identificador de comerciante; tráfego sem credencial
+/// válida — ao qual o limite por comerciante não alcança — usa o limite <paramref name="porOrigem"/>
+/// por endereço de origem. Um serviço sem middleware de autenticação (o emissor) cai sempre nesta
+/// segunda partição, sem nenhuma ramificação por serviço.
 /// </summary>
-internal static class PoliticaDeLimiteDeTaxa
+public static class PoliticaDeLimiteDeTaxa
 {
     public const string Nome = "padrao";
 
-    public static void Configurar(RateLimiterOptions opcoes, string claimDoComerciante)
+    public static void Configurar(
+        RateLimiterOptions opcoes,
+        string claimDoComerciante,
+        LimitesDeTaxa autenticado,
+        LimitesDeTaxa porOrigem)
     {
         opcoes.OnRejected = TratarRejeicaoAsync;
 
         opcoes.AddPolicy(Nome, httpContext => httpContext.User.Identity?.IsAuthenticated == true
-            ? ParticaoPorComerciante(httpContext, claimDoComerciante)
-            : ParticaoPorOrigemNaoAutenticada(httpContext));
+            ? ParticaoPorComerciante(httpContext, claimDoComerciante, autenticado)
+            : ParticaoPorOrigemNaoAutenticada(httpContext, porOrigem));
     }
 
-    private static RateLimitPartition<string> ParticaoPorComerciante(HttpContext httpContext, string claimDoComerciante)
+    private static RateLimitPartition<string> ParticaoPorComerciante(HttpContext httpContext, string claimDoComerciante, LimitesDeTaxa limites)
     {
         var comercianteId = httpContext.User.FindFirst(claimDoComerciante)?.Value ?? "comerciante-desconhecido";
 
-        return RateLimitPartition.Get(comercianteId, _ => CriarLimitadorDeTokens(tokenLimit: 200, tokensPerPeriod: 100));
+        return RateLimitPartition.Get(comercianteId, _ => CriarLimitadorDeTokens(limites));
     }
 
-    private static RateLimitPartition<string> ParticaoPorOrigemNaoAutenticada(HttpContext httpContext)
+    private static RateLimitPartition<string> ParticaoPorOrigemNaoAutenticada(HttpContext httpContext, LimitesDeTaxa limites)
     {
         var enderecoDeOrigem = httpContext.Connection.RemoteIpAddress?.ToString() ?? "origem-desconhecida";
 
-        return RateLimitPartition.Get(enderecoDeOrigem, _ => CriarLimitadorDeTokens(tokenLimit: 40, tokensPerPeriod: 20));
+        return RateLimitPartition.Get(enderecoDeOrigem, _ => CriarLimitadorDeTokens(limites));
     }
 
     /// <summary>
@@ -44,11 +51,11 @@ internal static class PoliticaDeLimiteDeTaxa
     /// teste de carga direto comparando as duas formas. Construir o limitador diretamente, com seu
     /// próprio temporizador de reposição, contorna o problema.
     /// </summary>
-    private static TokenBucketRateLimiter CriarLimitadorDeTokens(int tokenLimit, int tokensPerPeriod)
+    private static TokenBucketRateLimiter CriarLimitadorDeTokens(LimitesDeTaxa limites)
         => new(new TokenBucketRateLimiterOptions
         {
-            TokenLimit = tokenLimit,
-            TokensPerPeriod = tokensPerPeriod,
+            TokenLimit = limites.Rajada,
+            TokensPerPeriod = limites.TaxaPorSegundo,
             ReplenishmentPeriod = TimeSpan.FromSeconds(1),
             AutoReplenishment = true,
             QueueLimit = 0,

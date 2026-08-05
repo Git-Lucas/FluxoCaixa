@@ -1,10 +1,12 @@
 using FluxoCaixa.Consolidado.Api.Persistencia;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -49,6 +51,18 @@ public sealed class ApiTestesFactory : WebApplicationFactory<Program>, IAsyncLif
             // borda exercitam autenticação, validação e limite de taxa, não mensageria — já coberta
             // pelas coleções de integração narrow.
             servicos.RemoveAll<IHostedService>();
+
+            // Os testes de borda não sobem o emissor real: injeta a chave pública do par RSA
+            // efêmero de TokenDeTeste diretamente, no lugar da busca via Authority. Precisa ser
+            // Configure, não PostConfigure — cada Configure roda antes de qualquer PostConfigure,
+            // e é o PostConfigure interno do JwtBearer que cria o ConfigurationManager real a
+            // partir da Authority (e falharia por exigir HTTPS) se visse a Authority original.
+            servicos.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opcoes =>
+            {
+                opcoes.Authority = null;
+                opcoes.RequireHttpsMetadata = false;
+                opcoes.TokenValidationParameters.IssuerSigningKey = new RsaSecurityKey(TokenDeTeste.ChavePublica);
+            });
         });
     }
 }

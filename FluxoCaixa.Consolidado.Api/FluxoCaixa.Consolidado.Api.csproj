@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FluxoCaixa.Contratos\FluxoCaixa.Contratos.csproj" />
+    <ProjectReference Include="..\FluxoCaixa.Plataforma\FluxoCaixa.Plataforma.csproj" />
   </ItemGroup>
 
   <ItemGroup>
