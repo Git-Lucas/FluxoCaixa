@@ -1,9 +1,12 @@
 using FluxoCaixa.Identidade.Api.Chave;
 using FluxoCaixa.Identidade.Api.Descoberta;
 using FluxoCaixa.Identidade.Api.Emissao;
-using FluxoCaixa.Plataforma.LimiteDeTaxa;
+using FluxoCaixa.Plataforma.Telemetria;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AdicionarTelemetria("FluxoCaixa.Identidade");
 
 builder.Services
     .AddOptions<OpcoesDoEmissor>()
@@ -20,22 +23,23 @@ builder.Services
 var opcoesDaChave = builder.Configuration.GetSection(OpcoesDaChave.SecaoDeConfiguracao).Get<OpcoesDaChave>() ?? new OpcoesDaChave();
 builder.Services.AddSingleton(ChaveDeAssinatura.CarregarOuGerar(opcoesDaChave.CaminhoDoArquivo));
 
-builder.Services.AddRateLimiter(opcoes => PoliticaDeLimiteDeTaxa.Configurar(
-    opcoes,
-    claimDoComerciante: "sub",
-    autenticado: new LimitesDeTaxa(Rajada: 20, TaxaPorSegundo: 10),
-    porOrigem: new LimitesDeTaxa(Rajada: 20, TaxaPorSegundo: 10)));
+builder.Services.AddHealthChecks().AddCheck<AptidaoDoEmissorHealthCheck>("chave-de-assinatura", tags: ["ready"]);
+
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
-
-app.UseRateLimiter();
 
 app.MapearEndpointDeToken();
 app.MapearEndpointsDeDescoberta();
 
+app.MapHealthChecks("/health/healthy", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
+
+app.MapOpenApi();
+app.UseSwaggerUI(opcoes => opcoes.SwaggerEndpoint("/openapi/v1.json", "FluxoCaixa.Identidade"));
+
 await app.RunAsync();
 
-/// <summary>Ponto de entrada exposto para o host de testes de borda (<c>WebApplicationFactory</c>).</summary>
 public sealed partial class Program
 {
     private Program()

@@ -10,7 +10,7 @@ namespace FluxoCaixa.Identidade.Testes.Api;
 
 public sealed class EndpointDeTokenTestes : IClassFixture<IdentidadeApiTestesFactory>
 {
-    private const string Caminho = "/connect/token";
+    private const string _caminho = "/connect/token";
 
     private readonly HttpClient _cliente;
 
@@ -27,7 +27,7 @@ public sealed class EndpointDeTokenTestes : IClassFixture<IdentidadeApiTestesFac
             campos.Add(new KeyValuePair<string, string>("grant_type", grantType));
         }
 
-        var requisicao = new HttpRequestMessage(HttpMethod.Post, Caminho)
+        var requisicao = new HttpRequestMessage(HttpMethod.Post, _caminho)
         {
             Content = new FormUrlEncodedContent(campos),
         };

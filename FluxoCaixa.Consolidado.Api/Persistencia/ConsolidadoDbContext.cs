@@ -2,11 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FluxoCaixa.Consolidado.Api.Persistencia;
 
-/// <summary>
-/// O isolamento entre comerciantes é imposto aqui, por padrão, via filtro global de consulta.
-/// Alcançar dado alheio exige desligar o filtro explicitamente com <c>IgnoreQueryFilters</c>, o que
-/// só o expurgo em segundo plano — que opera entre comerciantes — faz.
-/// </summary>
 public sealed class ConsolidadoDbContext(DbContextOptions<ConsolidadoDbContext> options, IContextoComerciante contextoComerciante)
     : DbContext(options)
 {

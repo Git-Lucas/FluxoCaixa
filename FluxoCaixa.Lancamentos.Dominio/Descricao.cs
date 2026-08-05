@@ -1,12 +1,8 @@
 namespace FluxoCaixa.Lancamentos.Dominio;
 
-/// <summary>
-/// Descrição do lançamento: obrigatória, não vazia após remoção de espaços nas extremidades,
-/// limitada a 200 caracteres e livre de caracteres de controle.
-/// </summary>
 public readonly record struct Descricao
 {
-    private const int TamanhoMaximo = 200;
+    private const int _tamanhoMaximo = 200;
 
     public Descricao(string? valor)
     {
@@ -19,11 +15,11 @@ public readonly record struct Descricao
                 "A descrição é obrigatória.");
         }
 
-        if (normalizada.Length > TamanhoMaximo)
+        if (normalizada.Length > _tamanhoMaximo)
         {
             throw new LancamentoInvalidoException(
                 RegraViolada.DescricaoMuitoLonga,
-                $"A descrição deve ter no máximo {TamanhoMaximo} caracteres.");
+                $"A descrição deve ter no máximo {_tamanhoMaximo} caracteres.");
         }
 
         if (normalizada.Any(char.IsControl))

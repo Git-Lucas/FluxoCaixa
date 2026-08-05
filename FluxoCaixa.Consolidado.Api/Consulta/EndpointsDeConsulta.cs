@@ -1,7 +1,6 @@
 using System.Globalization;
-using FluxoCaixa.Consolidado.Api.Autenticacao;
 using FluxoCaixa.Consolidado.Api.Persistencia;
-using FluxoCaixa.Plataforma.LimiteDeTaxa;
+using FluxoCaixa.Plataforma.Autenticacao;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -9,13 +8,12 @@ namespace FluxoCaixa.Consolidado.Api.Consulta;
 
 internal static class EndpointsDeConsulta
 {
-    private const string FormatoDaData = "yyyy-MM-dd";
+    private const string _formatoDaData = "yyyy-MM-dd";
 
     public static void MapearEndpointsDeConsulta(this IEndpointRouteBuilder app)
     {
         app.MapGet("/consolidado/{data}", ConsultarAsync)
-            .RequireAuthorization()
-            .RequireRateLimiting(PoliticaDeLimiteDeTaxa.Nome);
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> ConsultarAsync(
@@ -26,7 +24,7 @@ internal static class EndpointsDeConsulta
         IOptions<OpcoesAutenticacao> opcoesAutenticacao,
         CancellationToken cancellationToken)
     {
-        if (!DateOnly.TryParseExact(data, FormatoDaData, CultureInfo.InvariantCulture, DateTimeStyles.None, out var competencia))
+        if (!DateOnly.TryParseExact(data, _formatoDaData, CultureInfo.InvariantCulture, DateTimeStyles.None, out var competencia))
         {
             return ProblemaDeDataInvalida();
         }
@@ -50,7 +48,7 @@ internal static class EndpointsDeConsulta
         statusCode: StatusCodes.Status400BadRequest,
         title: "DataInvalida",
         type: "https://fluxocaixa.dev/erros/data-invalida",
-        detail: $"A data deve estar no formato '{FormatoDaData}'.");
+        detail: $"A data deve estar no formato '{_formatoDaData}'.");
 
     private static IResult ProblemaDeCredencialSemComerciante() => Results.Problem(
         statusCode: StatusCodes.Status401Unauthorized,

@@ -1,9 +1,5 @@
 namespace FluxoCaixa.Lancamentos.Dominio;
 
-/// <summary>
-/// Identifica o comerciante dono do lançamento. É sempre derivado da credencial apresentada,
-/// nunca de dado informado na requisição.
-/// </summary>
 public readonly record struct ComercianteId
 {
     public ComercianteId(string valor)

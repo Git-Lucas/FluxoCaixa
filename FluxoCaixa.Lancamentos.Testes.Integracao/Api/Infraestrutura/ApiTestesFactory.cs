@@ -10,11 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FluxoCaixa.Lancamentos.Api.Testes.Infraestrutura;
 
-/// <summary>
-/// Sobe a API real com os adaptadores de persistência e publicação trocados por versões em
-/// memória — os testes de borda exercitam autenticação, isolamento, limite de taxa, limite de
-/// corpo e Problem Details, não a persistência real, já coberta pelos testes de integração narrow.
-/// </summary>
 public sealed class ApiTestesFactory : WebApplicationFactory<Program>
 {
     public ArmazenamentoDeTestes Armazenamento { get; } = new();
@@ -25,8 +20,6 @@ public sealed class ApiTestesFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Sinaliza a Program.cs para pular a migração automática no início — não há banco real
-        // disponível para os testes de borda, que trocam a persistência por versões em memória.
         builder.UseEnvironment("Testing");
 
         builder.ConfigureServices(servicos =>
@@ -44,11 +37,6 @@ public sealed class ApiTestesFactory : WebApplicationFactory<Program>
 
             servicos.AddLogging(construtor => construtor.AddProvider(CapturadorDeLog));
 
-            // Os testes de borda não sobem o emissor real: injeta a chave pública do par RSA
-            // efêmero de TokenDeTeste diretamente, no lugar da busca via Authority. Precisa ser
-            // Configure, não PostConfigure — cada Configure roda antes de qualquer PostConfigure,
-            // e é o PostConfigure interno do JwtBearer que cria o ConfigurationManager real a
-            // partir da Authority (e falharia por exigir HTTPS) se visse a Authority original.
             servicos.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, opcoes =>
             {
                 opcoes.Authority = null;
@@ -59,7 +47,6 @@ public sealed class ApiTestesFactory : WebApplicationFactory<Program>
     }
 }
 
-/// <summary>Captura toda mensagem de log emitida durante o teste, para verificar ausência de credencial.</summary>
 public sealed class CapturadorDeLog : ILoggerProvider
 {
     private readonly List<string> _mensagens = [];

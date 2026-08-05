@@ -1,9 +1,5 @@
 namespace FluxoCaixa.Lancamentos.Dominio;
 
-/// <summary>
-/// Um lançamento de crédito ou débito no caixa de um comerciante. Imutável desde o registro: não
-/// existe operação de alteração, exclusão nem estorno.
-/// </summary>
 public sealed class Lancamento
 {
     private Lancamento(
@@ -38,12 +34,6 @@ public sealed class Lancamento
 
     public DateTimeOffset RecebidoEm { get; }
 
-    /// <summary>
-    /// Registra um novo lançamento a partir de tipos primitivos: a construção dos value objects, e
-    /// portanto a validação das invariantes de domínio, acontece aqui dentro, não na camada de
-    /// aplicação. Gera um identificador UUID versão 7, ordenável no tempo, para que a inserção
-    /// preserve a localidade do índice em vez de espalhá-la.
-    /// </summary>
     public static Lancamento Registrar(
         string comercianteId,
         string tipo,
@@ -61,10 +51,6 @@ public sealed class Lancamento
             new Descricao(descricao),
             recebidoEm);
 
-    /// <summary>
-    /// Reconstrói um lançamento já persistido, sem repetir validação: o conteúdo já foi validado
-    /// no momento do registro original.
-    /// </summary>
     public static Lancamento Reconstituir(
         Guid id,
         ComercianteId comercianteId,

@@ -6,11 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace FluxoCaixa.Identidade.Testes.Api.Infraestrutura;
 
-/// <summary>
-/// Sobe a API real do emissor, sem Docker e sem banco — apontando a chave para um arquivo
-/// temporário (o volume nomeado do compose não existe aqui) e a semente de clientes para valores
-/// conhecidos pelos testes.
-/// </summary>
 public sealed class IdentidadeApiTestesFactory : WebApplicationFactory<Program>
 {
     public const string ClientIdValido = "comerciante-testes";
@@ -46,7 +41,6 @@ public sealed class IdentidadeApiTestesFactory : WebApplicationFactory<Program>
     }
 }
 
-/// <summary>Captura toda mensagem de log emitida durante o teste, para verificar ausência de segredo e credencial.</summary>
 public sealed class CapturadorDeLog : ILoggerProvider
 {
     private readonly List<string> _mensagens = [];

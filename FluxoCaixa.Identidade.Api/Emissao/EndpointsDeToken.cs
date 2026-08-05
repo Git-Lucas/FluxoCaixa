@@ -3,27 +3,18 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FluxoCaixa.Identidade.Api.Chave;
-using FluxoCaixa.Plataforma.LimiteDeTaxa;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FluxoCaixa.Identidade.Api.Emissao;
 
-/// <summary>
-/// <c>POST /connect/token</c> — <c>grant_type=client_credentials</c> (RFC 6749 §4.4), cliente
-/// autenticado por <c>client_secret_basic</c>. O comerciante emitido é sempre o do cliente
-/// autenticado: a requisição não aceita nenhum identificador de comerciante como entrada.
-/// Erros seguem o formato do protocolo (<c>{"error": "..."}</c>), não Problem Details — decisão 5
-/// do design, para não quebrar a substituibilidade por um provedor de mercado.
-/// </summary>
 internal static class EndpointsDeToken
 {
     public const string Caminho = "/connect/token";
 
     public static void MapearEndpointDeToken(this IEndpointRouteBuilder app)
     {
-        app.MapPost(Caminho, EmitirAsync)
-            .RequireRateLimiting(PoliticaDeLimiteDeTaxa.Nome);
+        app.MapPost(Caminho, EmitirAsync);
     }
 
     private static async Task<IResult> EmitirAsync(
@@ -89,11 +80,6 @@ internal static class EndpointsDeToken
         };
     }
 
-    /// <summary>
-    /// Compara em tempo constante e sempre contra um segredo de mesmo comprimento do apresentado —
-    /// cliente inexistente e segredo incorreto ficam indistinguíveis também no tempo de resposta,
-    /// não só no corpo (design.md, decisão 7).
-    /// </summary>
     private static bool ClienteAutenticado(IReadOnlyList<ClienteConfigurado> clientes, string clientId, string clientSecretApresentado)
     {
         var apresentadoBytes = Encoding.UTF8.GetBytes(clientSecretApresentado);

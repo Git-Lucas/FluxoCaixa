@@ -9,11 +9,6 @@ using Xunit;
 
 namespace FluxoCaixa.Consolidado.Testes.Persistencia;
 
-/// <summary>
-/// Um único container Postgres para toda a coleção, com o consumidor real registrado sobre
-/// transporte em memória do MassTransit — estes testes focam na transação de consumo (atomicidade,
-/// deduplicação, concorrência), não no RabbitMQ, que tem sua própria coleção de testes.
-/// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18-alpine").Build();
@@ -60,7 +55,6 @@ public sealed class PostgresFixture : IAsyncLifetime
     public Task PublicarAsync(EventoLancamentoRegistrado evento)
         => _servicos!.GetRequiredService<IPublishEndpoint>().Publish(evento);
 
-    /// <summary>Um escopo de DI com o comerciante já definido, para consultas diretas via DbContext.</summary>
     internal EscopoDeTeste CriarEscopo(string comercianteId)
     {
         var escopo = _servicos!.CreateAsyncScope();

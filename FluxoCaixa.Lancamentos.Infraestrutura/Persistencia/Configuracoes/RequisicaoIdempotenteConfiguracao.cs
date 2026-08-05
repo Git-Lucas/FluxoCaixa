@@ -6,8 +6,8 @@ namespace FluxoCaixa.Lancamentos.Infraestrutura.Persistencia.Configuracoes;
 
 internal sealed class RequisicaoIdempotenteConfiguracao : IEntityTypeConfiguration<RequisicaoIdempotente>
 {
-    private const int TamanhoMaximoDaChave = 64;
-    private const int TamanhoDaImpressaoSha256Hexadecimal = 64;
+    private const int _tamanhoMaximoDaChave = 64;
+    private const int _tamanhoDaImpressaoSha256Hexadecimal = 64;
 
     public void Configure(EntityTypeBuilder<RequisicaoIdempotente> builder)
     {
@@ -21,16 +21,14 @@ internal sealed class RequisicaoIdempotenteConfiguracao : IEntityTypeConfigurati
 
         builder.Property(requisicao => requisicao.Chave)
             .HasColumnName("chave")
-            .HasMaxLength(TamanhoMaximoDaChave)
+            .HasMaxLength(_tamanhoMaximoDaChave)
             .IsRequired();
 
-        // Chave primária composta: é o próprio índice único de (comerciante, chave) que garante a
-        // exclusão sob concorrência.
         builder.HasKey(requisicao => new { requisicao.ComercianteId, requisicao.Chave });
 
         builder.Property(requisicao => requisicao.ImpressaoDoConteudo)
             .HasColumnName("impressao_do_conteudo")
-            .HasMaxLength(TamanhoDaImpressaoSha256Hexadecimal)
+            .HasMaxLength(_tamanhoDaImpressaoSha256Hexadecimal)
             .IsRequired();
 
         builder.Property(requisicao => requisicao.LancamentoId)
@@ -42,7 +40,6 @@ internal sealed class RequisicaoIdempotenteConfiguracao : IEntityTypeConfigurati
             .HasColumnType("timestamptz")
             .IsRequired();
 
-        // Apoia o expurgo por data, executado fora do caminho de atendimento da requisição.
         builder.HasIndex(requisicao => requisicao.CriadoEm)
             .HasDatabaseName("ix_requisicao_idempotente_criado_em");
     }

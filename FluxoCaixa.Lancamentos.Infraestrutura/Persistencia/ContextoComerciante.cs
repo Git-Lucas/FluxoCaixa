@@ -3,10 +3,6 @@ using FluxoCaixa.Lancamentos.Dominio;
 
 namespace FluxoCaixa.Lancamentos.Infraestrutura.Persistencia;
 
-/// <summary>
-/// Comerciante da requisição corrente. Escopo de requisição (registrado como serviço "scoped"), só
-/// pode ser definido uma vez, e só pela credencial validada — nunca por dado do corpo ou da rota.
-/// </summary>
 internal sealed class ContextoComerciante : IContextoComerciante, IDefinidorDeComerciante
 {
     private ComercianteId? _comercianteId;

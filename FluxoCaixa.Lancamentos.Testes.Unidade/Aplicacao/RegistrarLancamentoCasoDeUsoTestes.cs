@@ -9,9 +9,9 @@ namespace FluxoCaixa.Lancamentos.Aplicacao.Testes;
 
 public class RegistrarLancamentoCasoDeUsoTestes
 {
-    private static readonly ComercianteId s_comerciante = new("comerciante-1");
-    private static readonly DateOnly s_dataCorrente = new(2026, 8, 2);
-    private static readonly DateTimeOffset s_agora = new(2026, 8, 2, 12, 0, 0, TimeSpan.Zero);
+    private static readonly ComercianteId _comerciante = new("comerciante-1");
+    private static readonly DateOnly _dataCorrente = new(2026, 8, 2);
+    private static readonly DateTimeOffset _agora = new(2026, 8, 2, 12, 0, 0, TimeSpan.Zero);
 
     private readonly ILancamentoRepositorio _lancamentoRepositorio = Substitute.For<ILancamentoRepositorio>();
     private readonly IRegistroIdempotencia _registroIdempotencia = Substitute.For<IRegistroIdempotencia>();
@@ -23,9 +23,9 @@ public class RegistrarLancamentoCasoDeUsoTestes
 
     public RegistrarLancamentoCasoDeUsoTestes()
     {
-        _relogio.AgoraUtc.Returns(s_agora);
-        _relogio.DataCorrenteEmSaoPaulo.Returns(s_dataCorrente);
-        _contextoComerciante.ComercianteId.Returns(s_comerciante);
+        _relogio.AgoraUtc.Returns(_agora);
+        _relogio.DataCorrenteEmSaoPaulo.Returns(_dataCorrente);
+        _contextoComerciante.ComercianteId.Returns(_comerciante);
 
         _casoDeUso = new RegistrarLancamentoCasoDeUso(
             _lancamentoRepositorio,
@@ -36,18 +36,18 @@ public class RegistrarLancamentoCasoDeUsoTestes
     }
 
     private static RegistrarLancamentoRequisicao RequisicaoValida(string chave = "chave-1")
-        => new(chave, "credito", 100m, s_dataCorrente, "venda de balcão");
+        => new(chave, "credito", 100m, _dataCorrente, "venda de balcão");
 
     [Fact]
     public async Task ExecutarAsync_RequisicaoNova_RegistraEConfirmaComoCriado()
     {
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>())
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>())
             .Returns((RegistroIdempotencia?)null);
 
         var resposta = await _casoDeUso.ExecutarAsync(RequisicaoValida(), CancellationToken.None);
 
         Assert.True(resposta.Criado);
-        Assert.Equal(s_agora, resposta.RecebidoEm);
+        Assert.Equal(_agora, resposta.RecebidoEm);
         _lancamentoRepositorio.Received(1).Adicionar(Arg.Any<Lancamento>());
         _registroIdempotencia.Received(1).Adicionar(Arg.Any<RegistroIdempotencia>());
         await _unidadeDeTrabalho.Received(1).SalvarAsync(Arg.Any<CancellationToken>());
@@ -56,11 +56,11 @@ public class RegistrarLancamentoCasoDeUsoTestes
     [Fact]
     public async Task ExecutarAsync_ReenvioComMesmoConteudo_DevolveRespostaOriginalSemGravarNovamente()
     {
-        var lancamentoOriginal = LancamentoReconstituido(s_dataCorrente.AddDays(-1));
+        var lancamentoOriginal = LancamentoReconstituido(_dataCorrente.AddDays(-1));
         var impressaoOriginal = ImpressaoEsperada(RequisicaoValida());
-        var registro = new RegistroIdempotencia(s_comerciante, "chave-1", lancamentoOriginal.Id, impressaoOriginal, lancamentoOriginal.RecebidoEm);
+        var registro = new RegistroIdempotencia(_comerciante, "chave-1", lancamentoOriginal.Id, impressaoOriginal, lancamentoOriginal.RecebidoEm);
 
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
         _lancamentoRepositorio.ObterPorIdAsync(lancamentoOriginal.Id, Arg.Any<CancellationToken>()).Returns(lancamentoOriginal);
 
         var resposta = await _casoDeUso.ExecutarAsync(RequisicaoValida(), CancellationToken.None);
@@ -76,14 +76,12 @@ public class RegistrarLancamentoCasoDeUsoTestes
     [Fact]
     public async Task ExecutarAsync_ReenvioNaViradaDoDia_NaoReexecutaValidacaoDaJanelaDeCompetencia()
     {
-        // A competência original está fora da janela de 90 dias em relação à data corrente atual,
-        // o que provaria a reexecução da validação se ela ocorresse.
-        var competenciaForaDaJanelaAtual = s_dataCorrente.AddDays(-200);
+        var competenciaForaDaJanelaAtual = _dataCorrente.AddDays(-200);
         var requisicaoOriginal = new RegistrarLancamentoRequisicao("chave-1", "credito", 100m, competenciaForaDaJanelaAtual, "venda de balcão");
         var lancamentoOriginal = LancamentoReconstituido(competenciaForaDaJanelaAtual);
-        var registro = new RegistroIdempotencia(s_comerciante, "chave-1", lancamentoOriginal.Id, ImpressaoEsperada(requisicaoOriginal), lancamentoOriginal.RecebidoEm);
+        var registro = new RegistroIdempotencia(_comerciante, "chave-1", lancamentoOriginal.Id, ImpressaoEsperada(requisicaoOriginal), lancamentoOriginal.RecebidoEm);
 
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
         _lancamentoRepositorio.ObterPorIdAsync(lancamentoOriginal.Id, Arg.Any<CancellationToken>()).Returns(lancamentoOriginal);
         _relogio.DataCorrenteEmSaoPaulo.Returns(_ => throw new InvalidOperationException(
             "O relógio não deveria ser consultado para revalidar a janela de competência num reenvio."));
@@ -97,10 +95,10 @@ public class RegistrarLancamentoCasoDeUsoTestes
     [Fact]
     public async Task ExecutarAsync_ReenvioComConteudoDiferente_LancaConflitoDeConteudo()
     {
-        var lancamentoOriginal = LancamentoReconstituido(s_dataCorrente.AddDays(-1));
-        var registro = new RegistroIdempotencia(s_comerciante, "chave-1", lancamentoOriginal.Id, "impressao-diferente", lancamentoOriginal.RecebidoEm);
+        var lancamentoOriginal = LancamentoReconstituido(_dataCorrente.AddDays(-1));
+        var registro = new RegistroIdempotencia(_comerciante, "chave-1", lancamentoOriginal.Id, "impressao-diferente", lancamentoOriginal.RecebidoEm);
 
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>()).Returns(registro);
 
         await Assert.ThrowsAsync<ConflitoDeConteudoIdempotenteException>(
             () => _casoDeUso.ExecutarAsync(RequisicaoValida(), CancellationToken.None));
@@ -111,9 +109,9 @@ public class RegistrarLancamentoCasoDeUsoTestes
     [Fact]
     public async Task ExecutarAsync_ValorZero_LancaExcecaoDeDominioSemConsumirAChave()
     {
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>())
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>())
             .Returns((RegistroIdempotencia?)null);
-        var requisicaoInvalida = new RegistrarLancamentoRequisicao("chave-1", "credito", 0m, s_dataCorrente, "venda de balcão");
+        var requisicaoInvalida = new RegistrarLancamentoRequisicao("chave-1", "credito", 0m, _dataCorrente, "venda de balcão");
 
         var excecao = await Assert.ThrowsAsync<LancamentoInvalidoException>(
             () => _casoDeUso.ExecutarAsync(requisicaoInvalida, CancellationToken.None));
@@ -127,11 +125,11 @@ public class RegistrarLancamentoCasoDeUsoTestes
     [Fact]
     public async Task ExecutarAsync_ConflitoDeUnicidadeNaGravacao_RelePassaADevolverRespostaDeReenvio()
     {
-        var lancamentoConcorrente = LancamentoReconstituido(s_dataCorrente);
+        var lancamentoConcorrente = LancamentoReconstituido(_dataCorrente);
         var registroConcorrente = new RegistroIdempotencia(
-            s_comerciante, "chave-1", lancamentoConcorrente.Id, ImpressaoEsperada(RequisicaoValida()), lancamentoConcorrente.RecebidoEm);
+            _comerciante, "chave-1", lancamentoConcorrente.Id, ImpressaoEsperada(RequisicaoValida()), lancamentoConcorrente.RecebidoEm);
 
-        _registroIdempotencia.ObterAsync(s_comerciante, "chave-1", Arg.Any<CancellationToken>())
+        _registroIdempotencia.ObterAsync(_comerciante, "chave-1", Arg.Any<CancellationToken>())
             .Returns((RegistroIdempotencia?)null, registroConcorrente);
 
         _unidadeDeTrabalho.SalvarAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new ConflitoDeIdempotenciaException());
@@ -147,12 +145,12 @@ public class RegistrarLancamentoCasoDeUsoTestes
     private static Lancamento LancamentoReconstituido(DateOnly competencia)
         => Lancamento.Reconstituir(
             Guid.CreateVersion7(),
-            s_comerciante,
+            _comerciante,
             TipoLancamento.Credito,
             new Dinheiro(100m),
             DataCompetencia.Reconstituir(competencia),
             new Descricao("venda de balcão"),
-            s_agora.AddDays(-1));
+            _agora.AddDays(-1));
 
     private static string ImpressaoEsperada(RegistrarLancamentoRequisicao requisicao)
     {

@@ -7,12 +7,6 @@ using Microsoft.Extensions.Options;
 
 namespace FluxoCaixa.Lancamentos.Infraestrutura.Expurgo;
 
-/// <summary>
-/// Expurga, fora do caminho de atendimento da requisição, as chaves de idempotência com mais de 7
-/// dias — o índice único está no caminho crítico de escrita e degradaria sem esse expurgo. Ignora o
-/// filtro global de comerciante deliberadamente: é limpeza entre comerciantes, não uma consulta em
-/// nome de um deles.
-/// </summary>
 internal sealed class ExpurgoDeIdempotenciaEmSegundoPlano(
     IServiceScopeFactory scopeFactory,
     IOptions<OpcoesDeExpurgo> opcoes,

@@ -3,11 +3,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace FluxoCaixa.Consolidado.Api.Persistencia;
 
-/// <summary>
-/// Permite às ferramentas de design-time do EF Core (`dotnet ef migrations`) construir o
-/// <see cref="ConsolidadoDbContext"/> sem o escopo de requisição/consumo que fornece o comerciante
-/// em tempo de execução.
-/// </summary>
 public sealed class ConsolidadoDbContextFactory : IDesignTimeDbContextFactory<ConsolidadoDbContext>
 {
     public ConsolidadoDbContext CreateDbContext(string[] args)

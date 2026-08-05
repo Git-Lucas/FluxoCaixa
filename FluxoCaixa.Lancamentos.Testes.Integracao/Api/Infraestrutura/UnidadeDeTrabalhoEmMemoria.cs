@@ -5,7 +5,6 @@ using FluxoCaixa.Lancamentos.Dominio;
 
 namespace FluxoCaixa.Lancamentos.Api.Testes.Infraestrutura;
 
-/// <summary>Armazenamento durável em memória, compartilhado entre requisições dentro de um mesmo teste.</summary>
 public sealed class ArmazenamentoDeTestes
 {
     public ConcurrentDictionary<Guid, Lancamento> Lancamentos { get; } = new();
@@ -13,11 +12,6 @@ public sealed class ArmazenamentoDeTestes
     public ConcurrentDictionary<(string ComercianteId, string Chave), RegistroIdempotencia> Idempotencia { get; } = new();
 }
 
-/// <summary>
-/// Substitui os adaptadores de persistência reais nos testes de borda: um único objeto de escopo de
-/// requisição implementando as três portas, para reproduzir a semântica "tudo ou nada" de
-/// <c>SalvarAsync</c> sem precisar de um banco real.
-/// </summary>
 internal sealed class UnidadeDeTrabalhoEmMemoria(ArmazenamentoDeTestes armazenamento)
     : ILancamentoRepositorio, IRegistroIdempotencia, IUnidadeDeTrabalho
 {

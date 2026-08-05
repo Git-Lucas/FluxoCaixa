@@ -4,7 +4,7 @@ namespace FluxoCaixa.Identidade.Api.Chave;
 
 internal static class CarregadorDeChaveRsa
 {
-    private const int TamanhoDaChaveEmBits = 2048;
+    private const int _tamanhoDaChaveEmBits = 2048;
 
     public static RSA CarregarOuGerar(string caminhoDoArquivo)
     {
@@ -21,7 +21,7 @@ internal static class CarregadorDeChaveRsa
             Directory.CreateDirectory(diretorio);
         }
 
-        var chaveNova = RSA.Create(TamanhoDaChaveEmBits);
+        var chaveNova = RSA.Create(_tamanhoDaChaveEmBits);
         File.WriteAllText(caminhoDoArquivo, chaveNova.ExportRSAPrivateKeyPem());
         return chaveNova;
     }

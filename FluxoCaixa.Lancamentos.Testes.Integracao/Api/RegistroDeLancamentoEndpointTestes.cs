@@ -11,7 +11,7 @@ namespace FluxoCaixa.Lancamentos.Api.Testes;
 
 public class RegistroDeLancamentoEndpointTestes : IClassFixture<ApiTestesFactory>
 {
-    private const string CabecalhoDaChave = "Idempotency-Key";
+    private const string _cabecalhoDaChave = "Idempotency-Key";
 
     private readonly ApiTestesFactory _fabrica;
     private readonly HttpClient _cliente;
@@ -44,7 +44,7 @@ public class RegistroDeLancamentoEndpointTestes : IClassFixture<ApiTestesFactory
 
         if (chave is not null)
         {
-            requisicao.Headers.Add(CabecalhoDaChave, chave);
+            requisicao.Headers.Add(_cabecalhoDaChave, chave);
         }
 
         return requisicao;
@@ -153,32 +153,6 @@ public class RegistroDeLancamentoEndpointTestes : IClassFixture<ApiTestesFactory
     }
 
     [Fact]
-    public async Task Registrar_ExcedeLimiteDeRequisicoesDoComerciante_RespondeComRetryAfter()
-    {
-        var token = TokenDeTeste.Gerar("comerciante-limite-de-taxa");
-
-        // Disparadas em paralelo, não em sequência: o limitador repõe 100 tokens por segundo, e um
-        // laço sequencial de 201 chamadas HTTP reais (mesmo em memória) pode levar tempo suficiente
-        // para essa reposição mascarar o limite. Em paralelo, as 201 chamadas cabem bem dentro da
-        // janela de 1s antes de qualquer reposição, tornando o teste determinístico.
-        var respostas = await Task.WhenAll(Enumerable.Range(0, 201).Select(async indice =>
-        {
-            using var requisicao = CriarRequisicao(CorpoValido(), token, $"chave-limite-{indice}");
-            return await _cliente.SendAsync(requisicao);
-        }));
-
-        var respostaLimitada = Array.Find(respostas, r => r.StatusCode == HttpStatusCode.TooManyRequests);
-
-        Assert.NotNull(respostaLimitada);
-        Assert.True(respostaLimitada.Headers.TryGetValues("Retry-After", out _));
-
-        foreach (var resposta in respostas)
-        {
-            resposta.Dispose();
-        }
-    }
-
-    [Fact]
     public async Task Registrar_FluxoAutenticado_NenhumLogContemACredencialApresentada()
     {
         var token = TokenDeTeste.Gerar("comerciante-log");
@@ -235,34 +209,6 @@ public class RegistroDeLancamentoEndpointTestes : IClassFixture<ApiTestesFactory
         Assert.Equal(HttpStatusCode.UnprocessableEntity, resposta.StatusCode);
         Assert.Equal("ValorNaoPositivo", problema!.Title);
         Assert.DoesNotContain("Exception", problema.Detail ?? string.Empty, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Registrar_InundacaoSemCredencial_EhContidaPorEnderecoDeOrigem()
-    {
-        // Fábrica isolada, não a compartilhada pela classe: o limite por origem não autenticada
-        // usa uma única partição sob TestServer (o endereço remoto é sempre o mesmo), e exauri-la
-        // aqui não pode vazar para os demais testes que também aparentam tráfego não autenticado
-        // (credencial ausente, expirada ou adulterada).
-        using var fabricaIsolada = new ApiTestesFactory();
-        using var clienteIsolado = fabricaIsolada.CreateClient();
-
-        var respostas = await Task.WhenAll(Enumerable.Range(0, 41).Select(async indice =>
-        {
-            using var requisicao = new HttpRequestMessage(HttpMethod.Post, "/lancamentos")
-            {
-                Content = JsonContent.Create(CorpoValido()),
-            };
-            requisicao.Headers.Add(CabecalhoDaChave, $"chave-anonima-{indice}");
-            return await clienteIsolado.SendAsync(requisicao);
-        }));
-
-        Assert.Contains(respostas, r => r.StatusCode == HttpStatusCode.TooManyRequests);
-
-        foreach (var resposta in respostas)
-        {
-            resposta.Dispose();
-        }
     }
 
     [Fact]

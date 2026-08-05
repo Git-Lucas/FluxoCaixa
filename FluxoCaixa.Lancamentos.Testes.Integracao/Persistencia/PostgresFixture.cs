@@ -9,11 +9,6 @@ using Xunit;
 
 namespace FluxoCaixa.Lancamentos.Infraestrutura.Testes;
 
-/// <summary>
-/// Um único container Postgres para toda a coleção, com o outbox transacional do MassTransit
-/// registrado sobre transporte em memória — estes testes focam no adaptador Postgres (atomicidade,
-/// isolamento, concorrência), não no RabbitMQ, que tem sua própria coleção de testes.
-/// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:18-alpine").Build();
@@ -56,7 +51,6 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _container.DisposeAsync();
     }
 
-    /// <summary>Um escopo de DI com o comerciante já definido, para consultas diretas via DbContext.</summary>
     internal EscopoDeTeste CriarEscopo(ComercianteId comercianteId)
     {
         var escopo = _servicos!.CreateAsyncScope();
@@ -65,7 +59,6 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 }
 
-/// <summary>Agrupa DbContext, repositórios e unidade de trabalho de um único escopo de DI de teste.</summary>
 internal sealed class EscopoDeTeste(AsyncServiceScope escopo) : IAsyncDisposable
 {
     public LancamentosDbContext DbContext { get; } = escopo.ServiceProvider.GetRequiredService<LancamentosDbContext>();

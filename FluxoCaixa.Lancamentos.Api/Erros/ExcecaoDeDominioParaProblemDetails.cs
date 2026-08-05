@@ -5,11 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FluxoCaixa.Lancamentos.Api.Erros;
 
-/// <summary>
-/// Traduz exceção de domínio e de conflito de idempotência para Problem Details (RFC 9457),
-/// identificando a regra violada sem vazar rastreamento de pilha, nome de tabela ou credencial.
-/// Qualquer outra exceção não é tratada aqui — cai no handler padrão, que devolve 500 genérico.
-/// </summary>
 internal sealed class ExcecaoDeDominioParaProblemDetails : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)

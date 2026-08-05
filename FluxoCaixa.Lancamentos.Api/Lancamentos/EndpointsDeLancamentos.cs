@@ -1,10 +1,9 @@
-using FluxoCaixa.Lancamentos.Api.Autenticacao;
 using FluxoCaixa.Lancamentos.Api.Contratos;
 using FluxoCaixa.Lancamentos.Aplicacao.Portas;
 using FluxoCaixa.Lancamentos.Aplicacao.RegistrarLancamento;
 using FluxoCaixa.Lancamentos.Dominio;
 using FluxoCaixa.Lancamentos.Infraestrutura.Persistencia;
-using FluxoCaixa.Plataforma.LimiteDeTaxa;
+using FluxoCaixa.Plataforma.Autenticacao;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -12,14 +11,13 @@ namespace FluxoCaixa.Lancamentos.Api.Lancamentos;
 
 internal static class EndpointsDeLancamentos
 {
-    private const string NomeDoCabecalhoDaChave = "Idempotency-Key";
-    private const int TamanhoMaximoDaChave = 64;
+    private const string _nomeDoCabecalhoDaChave = "Idempotency-Key";
+    private const int _tamanhoMaximoDaChave = 64;
 
     public static void MapearEndpointsDeLancamentos(this IEndpointRouteBuilder app)
     {
         app.MapPost("/lancamentos", RegistrarAsync)
-            .RequireAuthorization()
-            .RequireRateLimiting(PoliticaDeLimiteDeTaxa.Nome);
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> RegistrarAsync(
@@ -30,7 +28,7 @@ internal static class EndpointsDeLancamentos
         IOptions<OpcoesAutenticacao> opcoesAutenticacao,
         CancellationToken cancellationToken)
     {
-        if (!httpContext.Request.Headers.TryGetValue(NomeDoCabecalhoDaChave, out var valores) || valores.Count != 1)
+        if (!httpContext.Request.Headers.TryGetValue(_nomeDoCabecalhoDaChave, out var valores) || valores.Count != 1)
         {
             return ProblemaDeChaveAusente();
         }
@@ -60,20 +58,20 @@ internal static class EndpointsDeLancamentos
 
     private static bool ChaveEhValida(string? chave)
         => !string.IsNullOrEmpty(chave)
-           && chave.Length <= TamanhoMaximoDaChave
+           && chave.Length <= _tamanhoMaximoDaChave
            && chave.All(caractere => !char.IsControl(caractere));
 
     private static IResult ProblemaDeChaveAusente() => Results.Problem(
         statusCode: StatusCodes.Status400BadRequest,
         title: "ChaveDeIdempotenciaAusente",
         type: "https://fluxocaixa.dev/erros/chave-de-idempotencia-ausente",
-        detail: $"O cabeçalho '{NomeDoCabecalhoDaChave}' é obrigatório e deve aparecer uma única vez.");
+        detail: $"O cabeçalho '{_nomeDoCabecalhoDaChave}' é obrigatório e deve aparecer uma única vez.");
 
     private static IResult ProblemaDeChaveInvalida() => Results.Problem(
         statusCode: StatusCodes.Status400BadRequest,
         title: "ChaveDeIdempotenciaInvalida",
         type: "https://fluxocaixa.dev/erros/chave-de-idempotencia-invalida",
-        detail: $"A chave de idempotência deve ser não vazia, com no máximo {TamanhoMaximoDaChave} caracteres imprimíveis.");
+        detail: $"A chave de idempotência deve ser não vazia, com no máximo {_tamanhoMaximoDaChave} caracteres imprimíveis.");
 
     private static IResult ProblemaDeCredencialSemComerciante() => Results.Problem(
         statusCode: StatusCodes.Status401Unauthorized,

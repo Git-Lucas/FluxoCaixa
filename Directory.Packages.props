@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +27,22 @@
 
     <!-- Autenticação -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+
+    <!-- Documentação -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+    <!-- Fixa a versão transitiva trazida por Microsoft.AspNetCore.OpenApi:
+         2.0.0 tem vulnerabilidade de severidade alta (GHSA-v5pm-xwqc-g5wc), corrigida a partir
+         de 2.7.5. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
+
+    <!-- Observabilidade -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
 
     <!-- Testes -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
