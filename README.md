@@ -222,6 +222,58 @@ analisador estático [`SonarAnalyzer.CSharp`](https://www.nuget.org/packages/Son
 para qualidade de código — qualquer violação de regra quebra o build, não fica só como aviso
 ignorável.
 
+**Idempotência, concorrência e resiliência** — três cuidados atravessam os dois serviços de
+negócio, cada um resolvendo uma fonte distinta de duplicidade ou falha parcial:
+
+- *Idempotência na borda de escrita.* `POST /lancamentos` exige `Idempotency-Key`: o reenvio da
+  mesma chave devolve a resposta original (`200`) em vez de criar um segundo lançamento (`201`) —
+  necessário porque o cliente não tem como saber, depois de uma falha de rede, se a requisição
+  original chegou a ser processada. A chave e o lançamento gravam na mesma transação (ver
+  "Fluxo de dados", acima), então não existe janela em que um exista sem o outro.
+- *Concorrência sem leitura-modificação-escrita.* O publicador do outbox usa
+  `SELECT ... FOR UPDATE SKIP LOCKED` para permitir mais de um despachante ativo sem disputar a
+  mesma linha; o Consolidado incrementa o agregado diário com
+  `INSERT ... ON CONFLICT DO UPDATE SET total = total + excluded.total`, atômico no PostgreSQL, em
+  vez de carregar o total em memória e regravar — a alternativa perderia incrementos quando dois
+  consumidores processam lançamentos do mesmo dia em paralelo. Um `pg_advisory_xact_lock` fecha a
+  última brecha, contra duas entregas concorrentes do mesmo evento passando pela deduplicação antes
+  que a primeira tenha commitado. Detalhe completo na
+  [decisão 003](documentacao/decisoes/003-deduplicacao-manual-no-consolidado.md).
+- *Resiliência a falha de mensageria — não (ainda) a falha de banco.* O consumo do Consolidado usa
+  `UseMessageRetry` com intervalos crescentes (0s, 1s, 5s, 30s); esgotadas as tentativas, a mensagem
+  é segregada automaticamente na fila de erro do RabbitMQ, sem bloquear o processamento dos
+  lançamentos seguintes — ver
+  [decisão 004](documentacao/decisoes/004-retentativa-sem-plugin-do-broker.md). Essa resiliência
+  cobre o transporte; uma falha transitória de conexão com o PostgreSQL ainda propaga direto para a
+  requisição, sem retry automático — lacuna reconhecida, não implementada (ver "Decisões conhecidas
+  e melhorias futuras" abaixo).
+
+**Por que nenhuma camada adicional de escala (cache, réplica de leitura, pool de conexões externo,
+fila particionada) foi implementada** — a carga de referência do desafio, 50 req/s de consulta ao
+consolidado sob carga de fundo concorrente de registro (ver "Verificação de carga" abaixo), é
+atendida hoje sem nenhuma dessas camadas porque cada componente da stack escolhida já tem margem
+confortável acima desse número, não por não terem sido cogitadas:
+
+- *PostgreSQL, consulta por chave primária.* `GET /consolidado/{data}` é uma busca direta por chave
+  (comerciante + data) contra um total já pré-agregado — não há agregação em tempo de leitura. O
+  teto derivado da orientação corrente de conexões diretas do PostgreSQL para essa consulta fica em
+  torno de 1.500 rps (ver "Escada de gatilhos" abaixo), trinta vezes acima dos 50 rps de referência.
+- *RabbitMQ, fila única.* O teto documentado pela própria documentação do RabbitMQ, por núcleo no
+  caminho quente de uma réplica de fila, é ~5.000 mensagens/s — muito acima do volume de registro
+  gerado mesmo pela carga de fundo da verificação de carga.
+- *ASP.NET Core / Kestrel.* Nenhum dos dois serviços de negócio aproxima, no volume de referência,
+  os limites de concorrência de requisição do runtime .NET nem da configuração padrão do Kestrel —
+  a verificação de carga não mostra fila de processamento nem saturação de thread pool nas latências
+  coletadas.
+
+Adicionar essas camadas agora seria complexidade e custo operacional sem contrapartida: nenhum
+componente está perto de saturar no volume que o desafio define como referência, e cada uma delas
+introduz seu próprio modo de falha (invalidação de cache, defasagem de réplica, mais um componente
+para operar) que só se paga quando o volume real o exige. A tabela
+["Escada de gatilhos"](#escada-de-gatilhos), na seção "Melhorias futuras" abaixo, documenta o pico
+sustentado em que cada evolução de capacidade passa a se pagar e o sinal observável que anuncia essa
+chegada — para que a decisão de adicioná-las seja tomada quando o gatilho aparecer, não antes.
+
 ## Executando localmente
 
 Pré-requisitos: Docker e Docker Compose.
