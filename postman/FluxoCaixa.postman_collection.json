@@ -1,0 +1,277 @@
+{
+  "info": {
+    "_postman_id": "1f6d9d2a-6b5a-4b8b-9c2e-2a7f6b1d4e3a",
+    "name": "FluxoCaixa - Verificacao de Funcionamento",
+    "description": "Checagem funcional dos tres servicos (Identidade, Lancamentos, Consolidado) contra o ambiente do docker-compose. Obtem a credencial uma unica vez (pasta \"0. Autenticacao\") e reaproveita em todas as demais requisicoes via variavel de colecao/ambiente `access_token`. Rode a colecao inteira pelo Collection Runner, de cima para baixo. Complementa (nao substitui) `scripts/carga_consolidado.py` e a colecao `FluxoCaixa - Carga (Consolidado)`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Recalcula a competencia (yyyy-MM-dd) a cada execucao, para que a colecao sempre consulte o dia corrente.",
+          "const hoje = new Date().toISOString().slice(0, 10);",
+          "pm.environment.set('data_competencia', hoje);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Autenticacao",
+      "item": [
+        {
+          "name": "Obter token (client_credentials)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{client_id}}", "type": "string" },
+                { "key": "password", "value": "{{client_secret}}", "type": "string" }
+              ]
+            },
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "client_credentials", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{url_identidade}}/connect/token",
+              "host": ["{{url_identidade}}"],
+              "path": ["connect", "token"]
+            },
+            "description": "RFC 6749 Sec. 4.4, cliente autenticado por client_secret_basic. O client_id/client_secret sao os semeados em docker-compose.yml. O token dura 15 minutos (Emissao.Validade) - de sobra para o restante desta colecao e para a carga de 50 req/s de referencia."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token emitido com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const corpo = pm.response.json();",
+                  "    pm.expect(corpo.access_token, 'access_token ausente na resposta').to.be.a('string').and.not.empty;",
+                  "    pm.expect(corpo.token_type).to.eql('Bearer');",
+                  "",
+                  "    // Injeta o token no escopo do ambiente Postman: as demais requisicoes da colecao",
+                  "    // usam Authorization: Bearer {{access_token}} automaticamente (auth herdado da colecao).",
+                  "    pm.environment.set('access_token', corpo.access_token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Descoberta",
+      "item": [
+        {
+          "name": "Documento de descoberta (OIDC)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{url_identidade}}/.well-known/openid-configuration",
+              "host": ["{{url_identidade}}"],
+              "path": [".well-known", "openid-configuration"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Documento de descoberta disponivel', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().token_endpoint).to.include('/connect/token');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chave publica (JWKS)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{url_identidade}}/.well-known/jwks.json",
+              "host": ["{{url_identidade}}"],
+              "path": [".well-known", "jwks.json"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('JWKS disponivel', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().keys).to.have.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Saude",
+      "item": [
+        {
+          "name": "Identidade - healthy",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_identidade}}/health/healthy", "host": ["{{url_identidade}}"], "path": ["health", "healthy"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Identidade healthy', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Identidade - ready",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_identidade}}/health/ready", "host": ["{{url_identidade}}"], "path": ["health", "ready"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Identidade ready', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Lancamentos - healthy",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_lancamentos}}/health/healthy", "host": ["{{url_lancamentos}}"], "path": ["health", "healthy"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Lancamentos healthy', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Lancamentos - ready",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_lancamentos}}/health/ready", "host": ["{{url_lancamentos}}"], "path": ["health", "ready"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Lancamentos ready', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Consolidado - healthy",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_consolidado}}/health/healthy", "host": ["{{url_consolidado}}"], "path": ["health", "healthy"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Consolidado healthy', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Consolidado - ready",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{url_consolidado}}/health/ready", "host": ["{{url_consolidado}}"], "path": ["health", "ready"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Consolidado ready', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "3. Lancamentos",
+      "item": [
+        {
+          "name": "Registrar lancamento (credito)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "{{$guid}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"credito\",\n  \"valor\": 100.50,\n  \"competencia\": \"{{data_competencia}}\",\n  \"descricao\": \"Verificacao de funcionamento via Postman\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{url_lancamentos}}/lancamentos",
+              "host": ["{{url_lancamentos}}"],
+              "path": ["lancamentos"]
+            },
+            "description": "Idempotency-Key gerada por requisicao ({{$guid}}) para nao colidir com corridas anteriores da colecao."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lancamento registrado', function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "    const corpo = pm.response.json();",
+                  "    pm.expect(corpo.lancamentoId).to.be.a('string');",
+                  "    pm.expect(corpo.criado).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Consolidado",
+      "item": [
+        {
+          "name": "Consultar consolidado do dia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url_consolidado}}/consolidado/{{data_competencia}}",
+              "host": ["{{url_consolidado}}"],
+              "path": ["consolidado", "{{data_competencia}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Consolidado consultado', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const corpo = pm.response.json();",
+                  "    pm.expect(corpo).to.have.all.keys('totalCredito', 'totalDebito', 'saldo', 'atualizadoEm');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

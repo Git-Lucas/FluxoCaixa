@@ -1,0 +1,114 @@
+services:
+  postgres-lancamentos:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: fluxocaixa
+      POSTGRES_PASSWORD: fluxocaixa
+      POSTGRES_DB: fluxocaixa_lancamentos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_lancamentos_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxocaixa -d fluxocaixa_lancamentos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-consolidado:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: fluxocaixa
+      POSTGRES_PASSWORD: fluxocaixa
+      POSTGRES_DB: fluxocaixa_consolidado
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_consolidado_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxocaixa -d fluxocaixa_consolidado"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: fluxocaixa
+      RABBITMQ_DEFAULT_PASS: fluxocaixa
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "5672"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  identidade:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Identidade.Api/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      Chave__CaminhoDoArquivo: /dados/chave/chave-de-assinatura.pem
+      Emissao__Clientes__0__ClientId: comerciante-1
+      Emissao__Clientes__0__ClientSecret: segredo-comerciante-1-troque-em-producao
+      Emissao__Clientes__1__ClientId: comerciante-2
+      Emissao__Clientes__1__ClientSecret: segredo-comerciante-2-troque-em-producao
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
+    volumes:
+      - identidade_chave_data:/dados/chave
+
+  lancamentos:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Lancamentos.Api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Lancamentos: "Host=postgres-lancamentos;Port=5432;Database=fluxocaixa_lancamentos;Username=fluxocaixa;Password=fluxocaixa"
+      RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
+      Autenticacao__Authority: "http://identidade:8080"
+      Autenticacao__RequererHttps: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
+    depends_on:
+      postgres-lancamentos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  consolidado:
+    build:
+      context: .
+      dockerfile: FluxoCaixa.Consolidado.Api/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Consolidado: "Host=postgres-consolidado;Port=5432;Database=fluxocaixa_consolidado;Username=fluxocaixa;Password=fluxocaixa"
+      RabbitMq__ConnectionString: "amqp://fluxocaixa:fluxocaixa@rabbitmq:5672/"
+      Autenticacao__Authority: "http://identidade:8080"
+      Autenticacao__RequererHttps: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://dashboard:18889"
+    depends_on:
+      postgres-consolidado:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.5
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+
+volumes:
+  postgres_lancamentos_data:
+  postgres_consolidado_data:
+  identidade_chave_data:

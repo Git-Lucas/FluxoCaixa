@@ -1,0 +1,14 @@
+<Solution>
+  <Project Path="FluxoCaixa.Contratos/FluxoCaixa.Contratos.csproj" />
+  <Project Path="FluxoCaixa.Plataforma/FluxoCaixa.Plataforma.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Dominio/FluxoCaixa.Lancamentos.Dominio.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Aplicacao/FluxoCaixa.Lancamentos.Aplicacao.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Infraestrutura/FluxoCaixa.Lancamentos.Infraestrutura.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Api/FluxoCaixa.Lancamentos.Api.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Testes.Unidade/FluxoCaixa.Lancamentos.Testes.Unidade.csproj" />
+  <Project Path="FluxoCaixa.Lancamentos.Testes.Integracao/FluxoCaixa.Lancamentos.Testes.Integracao.csproj" />
+  <Project Path="FluxoCaixa.Consolidado.Api/FluxoCaixa.Consolidado.Api.csproj" />
+  <Project Path="FluxoCaixa.Consolidado.Testes/FluxoCaixa.Consolidado.Testes.csproj" />
+  <Project Path="FluxoCaixa.Identidade.Api/FluxoCaixa.Identidade.Api.csproj" />
+  <Project Path="FluxoCaixa.Identidade.Testes/FluxoCaixa.Identidade.Testes.csproj" />
+</Solution>

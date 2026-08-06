@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>FluxoCaixa.Lancamentos.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FluxoCaixa.Lancamentos.Aplicacao\FluxoCaixa.Lancamentos.Aplicacao.csproj" />
+    <ProjectReference Include="..\FluxoCaixa.Lancamentos.Infraestrutura\FluxoCaixa.Lancamentos.Infraestrutura.csproj" />
+    <ProjectReference Include="..\FluxoCaixa.Plataforma\FluxoCaixa.Plataforma.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+  </ItemGroup>
+
+</Project>

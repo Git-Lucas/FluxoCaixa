@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+.git/
+.github/
+docs/
+openspec/
+FluxoCaixa.Lancamentos.Testes.Unidade/
+FluxoCaixa.Lancamentos.Testes.Integracao/
