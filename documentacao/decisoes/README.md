@@ -5,7 +5,9 @@ arquitetura, não apenas a implementação. Decisões pontuais de implementaçã
 próprio; ficam explicadas, quando precisam de explicação, junto ao código que as exige.
 
 Cada registro apresenta o contexto que motivou a decisão, as alternativas consideradas e o motivo
-do descarte de cada uma.
+do descarte de cada uma. O registro 009 é a exceção de formato: em vez de introduzir uma decisão
+nova, consolida a postura de segurança que emerge das demais — o que é controle deliberado, o que é
+lacuna aceita e qual o gatilho de cada evolução.
 
 | # | Decisão |
 |---|---|
@@ -17,3 +19,4 @@ do descarte de cada uma.
 | [006](006-aspire-dashboard-sobre-stack-lgtm.md) | Aspire Dashboard em vez da stack LGTM |
 | [007](007-aptidao-ignora-o-transporte-de-mensagens.md) | Aptidão que ignora o transporte de mensagens |
 | [008](008-fronteira-entre-metrica-e-log-por-cardinalidade.md) | Fronteira entre métrica e log pela cardinalidade |
+| [009](009-postura-de-seguranca-frente-ao-owasp-top-10.md) | Postura de segurança frente ao OWASP Top 10:2025 |
