@@ -564,6 +564,10 @@ comerciantes; o recorte por comerciante vem do log estruturado.
   desligado apenas dentro da rede do `docker-compose` — inaceitável fora dela.
 - **Segredos de cliente em texto claro no repositório**: a semente de `docker-compose.yml` é
   declaradamente de desenvolvimento; em ambiente real viriam de cofre gerenciado.
+- **A postura de segurança completa está consolidada em**
+  [`documentacao/decisoes/009-postura-de-seguranca-frente-ao-owasp-top-10.md`](documentacao/decisoes/009-postura-de-seguranca-frente-ao-owasp-top-10.md):
+  quais controles existem por decisão, quais recomendações não se aplicam a uma API sem sessão e sem
+  usuário humano, e o gatilho de cada lacuna aceita.
 - **Reconstrução do consolidado não implementada**: perdido o banco do Consolidado, os saldos
   anteriores ao incidente não voltam. Motivo, alternativas descartadas e o gatilho da evolução na
   seção ["Melhorias futuras"](#reconstrução-do-consolidado) abaixo.

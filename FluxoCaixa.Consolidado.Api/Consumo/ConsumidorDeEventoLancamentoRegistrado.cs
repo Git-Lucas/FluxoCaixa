@@ -37,34 +37,30 @@ internal sealed class ConsumidorDeEventoLancamentoRegistrado(
             return;
         }
 
-        var colunaDoTotal = ColunaDoTotal(evento.Tipo);
+        // O lançamento é sempre crédito OU débito, então o total do outro tipo é zero e somá-lo
+        // é inócuo. Atualizar as duas colunas mantém o SQL fixo, sem concatenar nome de coluna.
+        var (totalCredito, totalDebito) = TotaisDoLancamento(evento.Tipo, evento.Valor);
 
-        var totalCredito = evento.Tipo == "credito" ? evento.Valor : 0m;
-        var totalDebito = evento.Tipo == "debito" ? evento.Valor : 0m;
-
-        var sql =
-            "INSERT INTO consolidado_diario (comerciante_id, competencia, total_credito, total_debito, atualizado_em) " +
-            "VALUES ({0}, {1}, {2}, {3}, {4}) " +
-            "ON CONFLICT (comerciante_id, competencia) DO UPDATE SET " +
-            colunaDoTotal + " = consolidado_diario." + colunaDoTotal + " + excluded." + colunaDoTotal + ", " +
-            "atualizado_em = excluded.atualizado_em";
-
-#pragma warning disable S2077
-        await dbContext.Database.ExecuteSqlRawAsync(
-            sql,
-            [comercianteId, evento.Competencia, totalCredito, totalDebito, agora],
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT INTO consolidado_diario (comerciante_id, competencia, total_credito, total_debito, atualizado_em)
+            VALUES ({comercianteId}, {evento.Competencia}, {totalCredito}, {totalDebito}, {agora})
+            ON CONFLICT (comerciante_id, competencia) DO UPDATE SET
+                total_credito = consolidado_diario.total_credito + excluded.total_credito,
+                total_debito = consolidado_diario.total_debito + excluded.total_debito,
+                atualizado_em = excluded.atualizado_em
+            """,
             context.CancellationToken);
-#pragma warning restore S2077
 
         await transacao.CommitAsync(context.CancellationToken);
 
         MetricasDoConsolidado.DefasagemDeConsolidacaoSegundos.Record((agora - evento.RecebidoEm).TotalSeconds);
     }
 
-    internal static string ColunaDoTotal(string tipo) => tipo switch
+    internal static (decimal TotalCredito, decimal TotalDebito) TotaisDoLancamento(string tipo, decimal valor) => tipo switch
     {
-        "credito" => "total_credito",
-        "debito" => "total_debito",
+        "credito" => (valor, 0m),
+        "debito" => (0m, valor),
         _ => throw new InvalidOperationException($"Tipo de lançamento desconhecido: '{tipo}'."),
     };
 }
